@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b5e20">
+<title>명지동 공원·녹지 티맵 바로열기</title>
+<meta name="description" content="부산 강서구 명지동 공원·녹지 31곳을 티맵에서 바로 열거나 주소를 복사하는 페이지">
+<style>
+  :root {
+    --bg: #f4f6f3;
+    --card: #ffffff;
+    --text: #111111;
+    --muted: #444444;
+    --line: #d7dbd5;
+    --green: #1b5e20;
+    --green-dark: #124516;
+    --blue: #0d47a1;
+    --blue-dark: #093171;
+    --badge: #e8f5e9;
+    --focus: #ff9800;
+    --fs-base: 20px;
+    --fs-name: 24px;
+    --fs-addr: 21px;
+    --fs-btn: 22px;
+    --btn-h: 58px;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: var(--fs-base); -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+    font-size: var(--fs-base);
+    line-height: 1.45;
+    padding-bottom: 96px;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--green);
+    color: #fff;
+    padding: 14px 16px 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+  header h1 {
+    margin: 0 0 10px;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  header h1 small {
+    display: block;
+    font-size: 20px;
+    font-weight: 400;
+    opacity: .92;
+    margin-top: 2px;
+  }
+  .search {
+    display: flex; gap: 8px;
+  }
+  .search input {
+    flex: 1;
+    height: var(--btn-h);
+    font-size: 22px;
+    padding: 0 16px;
+    border: 2px solid #ffffff;
+    border-radius: 12px;
+    color: var(--text);
+    background: #fff;
+    min-width: 0;
+  }
+  .search input:focus { outline: 4px solid var(--focus); outline-offset: 0; }
+  .search button {
+    height: var(--btn-h);
+    min-width: 76px;
+    padding: 0 14px;
+    font-size: 21px;
+    font-weight: 700;
+    border: 2px solid #fff;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--green);
+  }
+  .tabs {
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    padding: 12px 16px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto;
+    height: 54px;
+    padding: 0 18px;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 27px;
+    border: 2px solid var(--green);
+    background: #fff;
+    color: var(--green);
+    white-space: nowrap;
+  }
+  .tab[aria-pressed="true"] { background: var(--green); color: #fff; }
+  .tab:focus-visible, .btn:focus-visible { outline: 4px solid var(--focus); outline-offset: 2px; }
+
+  main { padding: 0 16px; }
+  .group-title {
+    margin: 26px 0 10px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green-dark);
+    padding-left: 12px;
+    border-left: 6px solid var(--green);
+  }
+  .group-title .cnt { font-weight: 400; color: var(--muted); font-size: 20px; margin-left: 6px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .card.hidden, .group.hidden { display: none; }
+  .row { display: flex; align-items: flex-start; gap: 12px; }
+  .num {
+    flex: 0 0 auto;
+    min-width: 52px; height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 800;
+    color: var(--green-dark);
+    background: var(--badge);
+    border: 2px solid var(--green);
+    border-radius: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .info { flex: 1; min-width: 0; }
+  .name {
+    font-size: var(--fs-name);
+    font-weight: 700;
+    margin: 2px 0 4px;
+    word-break: keep-all;
+  }
+  .name .sub { font-weight: 400; color: var(--muted); font-size: 20px; }
+  .addr {
+    font-size: var(--fs-addr);
+    color: var(--text);
+    word-break: keep-all;
+    -webkit-user-select: text; user-select: text;
+  }
+  .btns { display: flex; gap: 10px; margin-top: 14px; }
+  .btn {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    height: var(--btn-h);
+    font-size: var(--fs-btn);
+    font-weight: 700;
+    border-radius: 14px;
+    border: 0;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0,0,0,.15);
+    touch-action: manipulation;
+  }
+  .btn-tmap { background: var(--blue); color: #fff; }
+  .btn-tmap:active { background: var(--blue-dark); }
+  .btn-copy { background: #fff; color: var(--green-dark); border: 2px solid var(--green); }
+  .btn-copy:active { background: var(--badge); }
+  .btn-copy.done { background: var(--green); color: #fff; }
+
+  .empty {
+    display: none;
+    text-align: center;
+    padding: 40px 10px;
+    color: var(--muted);
+    font-size: 21px;
+  }
+  .empty.show { display: block; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 28px;
+    transform: translateX(-50%) translateY(20px);
+    background: #222; color: #fff;
+    font-size: 20px;
+    padding: 14px 22px;
+    border-radius: 14px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+    z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .sheet {
+    position: fixed; inset: 0; z-index: 30;
+    background: rgba(0,0,0,.55);
+    display: none;
+    align-items: flex-end;
+  }
+  .sheet.show { display: flex; }
+  .sheet-box {
+    width: 100%;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .sheet-box h2 { margin: 0 0 8px; font-size: 23px; }
+  .sheet-box p { margin: 0 0 14px; font-size: 20px; color: var(--muted); }
+  .sheet-box .addr-box {
+    font-size: 22px; font-weight: 700;
+    background: var(--badge);
+    padding: 14px; border-radius: 12px;
+    margin-bottom: 14px;
+    -webkit-user-select: text; user-select: text;
+  }
+  .sheet-box .btn { width: 100%; margin-bottom: 10px; }
+  .btn-store { background: var(--green); color: #fff; }
+  .btn-close { background: #eee; color: var(--text); }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 20px;
+    padding: 28px 16px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>명지동 공원·녹지 31곳
+    <small>부산 강서구 명지동 · 티맵 바로열기</small>
+  </h1>
+  <form class="search" role="search" onsubmit="return false;">
+    <input id="q" type="search" inputmode="search" autocomplete="off"
+           placeholder="번호 또는 이름 검색 (예: 7, 꿀벌)" aria-label="번호 또는 이름 검색">
+    <button type="button" id="clear" aria-label="검색 지우기">지우기</button>
+  </form>
+</header>
+
+<nav class="tabs" aria-label="구분">
+  <button class="tab" data-group="all" aria-pressed="true">전체 31</button>
+  <button class="tab" data-group="g1" aria-pressed="false">근린공원 4</button>
+  <button class="tab" data-group="g2" aria-pressed="false">어린이공원 8</button>
+  <button class="tab" data-group="g3" aria-pressed="false">소공원·문화공원 6</button>
+  <button class="tab" data-group="g4" aria-pressed="false">녹지 13</button>
+</nav>
+
+<main id="list"></main>
+<div class="empty" id="empty">찾는 장소가 없습니다.<br>번호나 이름을 다시 입력해 주세요.</div>
+
+<footer>
+  버튼을 누르면 티맵 앱이 열립니다.<br>
+  티맵이 열리지 않으면 "주소 복사"로 복사한 뒤 지도 앱에서 붙여 넣으세요.
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="sheet-box">
+    <h2 id="sheet-title">티맵이 열리지 않았나요?</h2>
+    <p>티맵 앱이 설치되어 있지 않거나 열리지 않을 때는 아래 주소를 복사해 지도 앱에서 검색해 주세요.</p>
+    <div class="addr-box" id="sheet-addr"></div>
+    <button class="btn btn-copy" id="sheet-copy" type="button">주소 복사</button>
+    <a class="btn btn-store" id="sheet-store" href="#" target="_blank" rel="noopener">티맵 앱 설치하기</a>
+    <button class="btn btn-close" id="sheet-close" type="button">닫기</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PREFIX = '부산 강서구 명지동 ';
+
+  // [번호, 이름, 보조명, 지번, 그룹]
+  var DATA = [
+    [1,  '물결공원',   '2호근린공원',  '3403',   'g1'],
+    [2,  '소리공원',   '3호근린공원',  '3398',   'g1'],
+    [3,  '울림공원',   '4호근린공원',  '3661',   'g1'],
+    [4,  '너울공원',   '5호근린공원',  '3663',   'g1'],
+    [5,  '나뭇잎공원', '3호어린이공원', '3428-4', 'g2'],
+    [6,  '큰배공원',   '4호어린이공원', '3349',   'g2'],
+    [7,  '봄뜰공원',   '5호어린이공원', '3513-3', 'g2'],
+    [8,  '옛터공원',   '6호어린이공원', '3483-4', 'g2'],
+    [9,  '꽃게공원',   '7호어린이공원', '3313-9', 'g2'],
+    [10, '꿀벌공원',   '8호어린이공원', '3406',   'g2'],
+    [11, '파도공원',   '9호어린이공원', '3409',   'g2'],
+    [12, '돛단배공원', '10호어린이공원','3577-1', 'g2'],
+    [13, '명지소공원', '',             '1396',   'g3'],
+    [14, '두루미공원', '2호소공원',    '3455-5', 'g3'],
+    [15, '해오라기공원','3호소공원',   '3602-3', 'g3'],
+    [16, '물떼새공원', '4호소공원',    '3575-1', 'g3'],
+    [17, '도요새공원', '5호소공원',    '3604-4', 'g3'],
+    [18, '문화공원',   '',             '3483-5', 'g3'],
+    [19, '완충녹지1호', '',            '3669',   'g4'],
+    [20, '완충녹지2호', '',            '3579-7', 'g4'],
+    [21, '완충녹지3호', '',            '3607',   'g4'],
+    [22, '완충녹지4호', '',            '3401-1', 'g4'],
+    [23, '완충녹지5호', '',            '3353-1', 'g4'],
+    [24, '완충녹지6호', '',            '3342-1', 'g4'],
+    [25, '완충녹지7호', '',            '3324-1', 'g4'],
+    [26, '완충녹지8호', '',            '3319-1', 'g4'],
+    [27, '완충녹지11호','',            '1783-4', 'g4'],
+    [28, '연결녹지1호', '',            '3580',   'g4'],
+    [29, '연결녹지3호', '',            '3342-10','g4'],
+    [30, '연결녹지4호', '',            '3341',   'g4'],
+    [31, '명지오션 완충녹지','',       '3226-2', 'g4']
+  ];
+
+  var GROUPS = [
+    ['g1', '근린공원'],
+    ['g2', '어린이공원'],
+    ['g3', '소공원·문화공원'],
+    ['g4', '녹지']
+  ];
+
+  var ua = navigator.userAgent || '';
+  var isAndroid = /Android/i.test(ua);
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  // 안드로이드 크롬·삼성인터넷은 intent:// 를 지원한다. 앱이 없으면 fallback URL(플레이스토어)로 간다.
+  var isAndroidChromium = isAndroid && /Chrome|SamsungBrowser/i.test(ua) && !/Firefox/i.test(ua);
+
+  var STORE_ANDROID = 'https://play.google.com/store/apps/details?id=com.skt.tmap.ku';
+  var STORE_IOS = 'https://apps.apple.com/kr/app/id431589174';
+  var STORE = isIOS ? STORE_IOS : STORE_ANDROID;
+
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+  function fullAddr(item) { return PREFIX + item[3]; }
+
+  // 티맵 검색 딥링크: tmap://search?name=<주소 URL인코딩>
+  function tmapUrl(addr) {
+    var enc = encodeURIComponent(addr);
+    if (isAndroidChromium) {
+      return 'intent://search?name=' + enc +
+             '#Intent;scheme=tmap;S.browser_fallback_url=' + encodeURIComponent(STORE_ANDROID) + ';end';
+    }
+    return 'tmap://search?name=' + enc;
+  }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // ---------- 렌더링 ----------
+  var list = document.getElementById('list');
+  var cards = [];
+
+  GROUPS.forEach(function (g) {
+    var items = DATA.filter(function (d) { return d[4] === g[0]; });
+    var section = el('section', 'group');
+    section.dataset.group = g[0];
+    var h = el('h2', 'group-title', g[1]);
+    var cnt = el('span', 'cnt', items.length + '곳');
+    h.appendChild(cnt);
+    section.appendChild(h);
+
+    items.forEach(function (d) {
+      var num = d[0], name = d[1], sub = d[2], addr = fullAddr(d);
+      var card = el('article', 'card');
+      card.dataset.num = pad2(num);
+      card.dataset.name = (name + ' ' + sub).replace(/\s+/g, ' ').trim();
+      card.dataset.jibun = d[3];
+      card.dataset.group = g[0];
+
+      var row = el('div', 'row');
+      row.appendChild(el('div', 'num', pad2(num)));
+
+      var info = el('div', 'info');
+      var nm = el('div', 'name', name);
+      if (sub) {
+        nm.appendChild(document.createTextNode(' '));
+        nm.appendChild(el('span', 'sub', '(' + sub + ')'));
+      }
+      info.appendChild(nm);
+      var ad = el('div', 'addr', addr);
+      info.appendChild(ad);
+      row.appendChild(info);
+      card.appendChild(row);
+
+      var btns = el('div', 'btns');
+      var a = el('a', 'btn btn-tmap', '티맵 열기');
+      a.href = tmapUrl(addr);
+      a.setAttribute('aria-label', pad2(num) + ' ' + name + ' 티맵 열기');
+      a.addEventListener('click', function () { onTmapClick(addr); });
+      btns.appendChild(a);
+
+      var c = el('button', 'btn btn-copy', '주소 복사');
+      c.type = 'button';
+      c.setAttribute('aria-label', pad2(num) + ' ' + name + ' 주소 복사');
+      c.addEventListener('click', function () { copyAddr(addr, c, ad); });
+      btns.appendChild(c);
+
+      card.appendChild(btns);
+      section.appendChild(card);
+      cards.push(card);
+    });
+    list.appendChild(section);
+  });
+
+  // ---------- 티맵 열기 실패 감지 ----------
+  var sheet = document.getElementById('sheet');
+  var sheetAddr = document.getElementById('sheet-addr');
+  var sheetCopy = document.getElementById('sheet-copy');
+  var sheetStore = document.getElementById('sheet-store');
+  var sheetClose = document.getElementById('sheet-close');
+  var pendingTimer = null;
+  var leftPage = false;
+
+  sheetStore.href = STORE;
+
+  function onTmapClick(addr) {
+    // 앱이 열리면 페이지가 숨겨진다(visibilitychange/blur). 2초 뒤에도 그대로 보이면 안내창을 띄운다.
+    leftPage = false;
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(function () {
+      pendingTimer = null;
+      if (!leftPage && document.visibilityState === 'visible') openSheet(addr);
+    }, isAndroidChromium ? 2500 : 1800);
+  }
+  function markLeft() {
+    if (document.visibilityState === 'hidden') {
+      leftPage = true;
+      if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+    }
+  }
+  document.addEventListener('visibilitychange', markLeft);
+  window.addEventListener('pagehide', function () { leftPage = true; if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; } });
+  window.addEventListener('blur', function () { leftPage = true; if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; } });
+
+  function openSheet(addr) {
+    sheetAddr.textContent = addr;
+    sheetCopy.textContent = '주소 복사';
+    sheetCopy.classList.remove('done');
+    sheetCopy.onclick = function () { copyAddr(addr, sheetCopy, sheetAddr); };
+    sheet.classList.add('show');
+  }
+  function closeSheet() { sheet.classList.remove('show'); }
+  sheetClose.addEventListener('click', closeSheet);
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+
+  // ---------- 주소 복사 ----------
+  var toast = document.getElementById('toast');
+  var toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2200);
+  }
+
+  function selectText(node) {
+    try {
+      var sel = window.getSelection();
+      var range = document.createRange();
+      range.selectNodeContents(node);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    ta.style.fontSize = '16px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { ta.setSelectionRange(0, text.length); } catch (e) {}
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function markDone(btn) {
+    var orig = btn.textContent;
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('done');
+    setTimeout(function () { btn.textContent = orig === '복사됨 ✓' ? '주소 복사' : orig; btn.classList.remove('done'); }, 1800);
+  }
+
+  function copyAddr(text, btn, addrNode) {
+    function onFail() {
+      // 복사가 안 되면 주소 글자를 선택해 두고 길게 눌러 복사하도록 안내한다.
+      if (selectText(addrNode)) showToast('자동 복사가 안 됩니다. 파란색으로 선택된 주소를 길게 눌러 복사하세요.');
+      else showToast('복사에 실패했습니다. 주소를 길게 눌러 복사하세요.');
+    }
+    function onOk() { markDone(btn); showToast('주소를 복사했습니다: ' + text); }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onOk, function () {
+        if (legacyCopy(text)) onOk(); else onFail();
+      });
+    } else {
+      if (legacyCopy(text)) onOk(); else onFail();
+    }
+  }
+
+  // ---------- 검색 · 그룹 필터 ----------
+  var q = document.getElementById('q');
+  var clearBtn = document.getElementById('clear');
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var empty = document.getElementById('empty');
+  var currentGroup = 'all';
+
+  function norm(s) { return (s || '').replace(/\s+/g, '').toLowerCase(); }
+
+  function matches(card, query) {
+    if (!query) return true;
+    var nq = norm(query);
+    if (!nq) return true;
+    if (/^\d+$/.test(nq)) {
+      // 숫자만 입력: 번호(두 자리) 또는 번호 그대로, 또는 지번
+      var n = String(parseInt(nq, 10));
+      if (card.dataset.num === pad2(parseInt(nq, 10))) return true;
+      if (String(parseInt(card.dataset.num, 10)) === n) return true;
+      if (card.dataset.jibun.indexOf(nq) === 0) return true;
+      return card.dataset.name.indexOf(nq) !== -1;
+    }
+    if (norm(card.dataset.name).indexOf(nq) !== -1) return true;
+    if (card.dataset.num.indexOf(nq) !== -1) return true;
+    if (card.dataset.jibun.indexOf(nq) !== -1) return true;
+    return false;
+  }
+
+  function applyFilter() {
+    var query = q.value.trim();
+    var shown = 0;
+    var groupShown = {};
+    cards.forEach(function (card) {
+      var ok = (currentGroup === 'all' || card.dataset.group === currentGroup) && matches(card, query);
+      card.classList.toggle('hidden', !ok);
+      if (ok) { shown++; groupShown[card.dataset.group] = true; }
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.group'), function (sec) {
+      sec.classList.toggle('hidden', !groupShown[sec.dataset.group]);
+    });
+    empty.classList.toggle('show', shown === 0);
+  }
+
+  q.addEventListener('input', applyFilter);
+  q.addEventListener('search', applyFilter);
+  clearBtn.addEventListener('click', function () { q.value = ''; applyFilter(); q.focus(); });
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      currentGroup = t.dataset.group;
+      tabs.forEach(function (x) { x.setAttribute('aria-pressed', x === t ? 'true' : 'false'); });
+      applyFilter();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  applyFilter();
+})();
+</script>
+</body>
+</html>
