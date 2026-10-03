@@ -16,5 +16,7 @@
 
 ## 배포
 
-GitHub Pages. `main` 브랜치에 올리면 `.github/workflows/pages.yml`이 자동으로 배포합니다.
-(저장소 Settings → Pages → Source가 "GitHub Actions"여야 합니다. 워크플로가 처음 실행될 때 자동으로 설정합니다.)
+GitHub Pages, `gh-pages` 브랜치에서 배포됩니다.
+주소: https://tpgatsby-lang.github.io/myeongji-parks/
+
+`main`을 고친 뒤 `git push origin main:gh-pages` 로 같은 내용을 `gh-pages`에 올리면 1~2분 안에 반영됩니다.
